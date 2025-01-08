@@ -24,6 +24,7 @@ jobs:
           mogrify -path dist/small -resize 292x256 images/*
           mogrify -path dist/medium -resize 395x192 images/*
           mogrify -path dist/hero -resize 1720x677 images/*
+          mogrify -path dist/square -resize 500x500 images/*
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
