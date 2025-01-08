@@ -1,0 +1,30 @@
+# Processes images at multiple resolutions and deploys them to GitHub Pages
+name: Process and Deploy Images
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install ImageMagick
+        run: sudo apt-get update && sudo apt-get install -y imagemagick
+
+      - name: Resize images
+        run: |
+          mkdir -p dist/thumbnail dist/small dist/medium dist/hero
+          mogrify -path dist/thumbnail -resize 188x96 images/*
+          mogrify -path dist/small -resize 292x256 images/*
+          mogrify -path dist/medium -resize 395x192 images/*
+          mogrify -path dist/hero -resize 1720x677 images/*
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          publish_dir: dist
+          publish_branch: gh-pages
+          github_token: ${{ secrets.GITHUB_TOKEN }}
