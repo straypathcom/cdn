@@ -19,7 +19,7 @@ jobs:
 
       - name: Resize images
         run: |
-          mkdir -p dist/thumbnail dist/small dist/medium dist/hero
+          mkdir -p dist/thumbnail dist/small dist/medium dist/hero dist/square
           mogrify -path dist/thumbnail -resize 188x96 images/*
           mogrify -path dist/small -resize 292x256 images/*
           mogrify -path dist/medium -resize 395x192 images/*
