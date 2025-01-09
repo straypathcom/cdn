@@ -23,7 +23,7 @@ jobs:
           mogrify -path dist/thumbnail -resize 188x96 images/*
           mogrify -path dist/small -resize 292x256 images/*
           mogrify -path dist/medium -resize 395x192 images/*
-          mogrify -path dist/hero -resize 1720x677 images/*
+          mogrify -path dist/hero -resize 1720x677 -quality 95 images/*
           mogrify -path dist/square -thumbnail 500x500^ -gravity center -extent 500x500 images/*
 
       - name: Deploy to GitHub Pages
