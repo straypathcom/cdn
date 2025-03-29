@@ -55,17 +55,28 @@ The `remove_metadata.sh` script optimizes images before committing:
 -   Resizes images to maximum width of 1800px while preserving aspect ratio
 -   Maintains image quality (95%)
 -   Reports which files were modified
+-   By default, only processes recently modified files to save time
 
 #### Requirements
 
+-   macOS or Linux with Bash
 -   ImageMagick (`brew install imagemagick`)
 -   ExifTool (`brew install exiftool`)
 
 #### Usage
 
 ```bash
-# Process all images in the images directory
+# Process images modified in the last day (default behavior)
 ./remove_metadata.sh
+
+# Process all images regardless of modification time
+./remove_metadata.sh -a
+
+# Process images modified in the last N days (e.g., 7 days)
+./remove_metadata.sh -d 7
+
+# Display help information
+./remove_metadata.sh -h
 
 # Process a single image
 ./remove_metadata.sh ./images/example.jpg
@@ -79,47 +90,6 @@ The `.github/workflows/resize.yml` workflow:
 2. Creates multiple resolution versions of each image
 3. Deploys them to the `gh-pages` branch
 4. Makes them accessible via GitHub Pages
-
-## Git Pre-commit Hook
-
-A Git pre-commit hook can be set up to automatically process images before committing:
-
-1. Create `.git/hooks/pre-commit`:
-
-    ```bash
-    #!/bin/bash
-
-    # Path to script with absolute path
-    SCRIPT_PATH="$(git rev-parse --show-toplevel)/remove_metadata.sh"
-
-    # Get staged image files
-    STAGED_IMAGES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.jpg$|\.jpeg$|\.png$')
-
-    # If there are no staged image files, exit successfully
-    if [ -z "$STAGED_IMAGES" ]; then
-        echo "✅ No image files staged for commit. Proceeding with commit."
-        exit 0
-    fi
-
-    # Process each staged image file
-    echo "🖼️ Processing staged image files..."
-    for file in $STAGED_IMAGES; do
-        if [ -f "$file" ]; then
-            bash "$SCRIPT_PATH" "$file"
-            # If the script modified the file, re-stage it
-            if [ $? -eq 0 ]; then
-                git add "$file"
-            fi
-        fi
-    done
-
-    exit 0
-    ```
-
-2. Make it executable:
-    ```bash
-    chmod +x .git/hooks/pre-commit
-    ```
 
 ## License
 

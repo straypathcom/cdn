@@ -1,4 +1,23 @@
 #!/bin/bash
+# filepath: /Users/peterbenoit/GitHub/straypathcom/cdn/remove_metadata.sh
+
+# Function to check if a file was recently modified
+is_recently_modified() {
+    local file=$1
+    local days=$2  # Number of days to consider "recent"
+
+    # Get file's modification time in seconds since epoch
+    local file_mtime=$(stat -f %m "$file")
+    # Get current time in seconds since epoch
+    local current_time=$(date +%s)
+    # Calculate threshold in seconds
+    local threshold_seconds=$((days * 24 * 60 * 60))
+    # Calculate file age
+    local file_age=$((current_time - file_mtime))
+
+    # Return true if file is newer than threshold
+    [ $file_age -lt $threshold_seconds ]
+}
 
 # Function to process a single file
 process_file() {
@@ -98,10 +117,39 @@ process_file() {
     fi
 }
 
+# Default settings
+process_all=false
+days_threshold=1  # Default: process files modified in the last day
+
+# Parse command line options
+while getopts "ad:h" opt; do
+  case $opt in
+    a)
+      process_all=true
+      ;;
+    d)
+      days_threshold=$OPTARG
+      ;;
+    h)
+      echo "Usage: $0 [-a] [-d days] [file]"
+      echo "  -a: Process all image files (not just recently modified)"
+      echo "  -d days: Process files modified in the last N days (default: 1)"
+      echo "  file: Process a specific file"
+      exit 0
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+  esac
+done
+shift $((OPTIND-1))
+
 # Variables to track changes
 total_files=0
 modified_files=0
 error_files=0
+skipped_files=0
 
 # Check if a specific file was provided
 if [ "$#" -eq 1 ]; then
@@ -115,13 +163,25 @@ if [ "$#" -eq 1 ]; then
         echo "⚠️ File processed, but no changes were necessary."
     fi
 else
-    # Process all image files
-    echo "🔍 Processing all image files..."
+    # Process image files
+    if [ "$process_all" = true ]; then
+        echo "🔍 Processing ALL image files..."
+    else
+        echo "🔍 Processing images modified in the last $days_threshold day(s)..."
+    fi
 
     # Process each image file
     for file in ./images/*.jpg ./images/*.jpeg ./images/*.png; do
         if [ -f "$file" ]; then
             ((total_files++))
+
+            # Skip files that aren't recent unless process_all is true
+            if [ "$process_all" = false ] && ! is_recently_modified "$file" "$days_threshold"; then
+                echo "⏩ Skipping older file: $file"
+                ((skipped_files++))
+                continue
+            fi
+
             process_file "$file"
             exit_code=$?
 
@@ -135,9 +195,11 @@ else
 
     # Summary
     echo "📊 Summary:"
-    echo "  Total files processed: $total_files"
+    echo "  Total files found: $total_files"
+    echo "  Files processed: $((total_files - skipped_files))"
     echo "  Files modified: $modified_files"
     echo "  Files with errors: $error_files"
-    echo "  Files unchanged: $((total_files - modified_files - error_files))"
-    echo "✅ Done processing all files!"
+    echo "  Files unchanged: $((total_files - skipped_files - modified_files - error_files))"
+    echo "  Files skipped (not recent): $skipped_files"
+    echo "✅ Done!"
 fi
