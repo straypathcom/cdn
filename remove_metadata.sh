@@ -177,7 +177,7 @@ else
 
             # Skip files that aren't recent unless process_all is true
             if [ "$process_all" = false ] && ! is_recently_modified "$file" "$days_threshold"; then
-                echo "⏩ Skipping older file: $file"
+                # echo "⏩ Skipping older file: $file"
                 ((skipped_files++))
                 continue
             fi
