@@ -1,34 +1,49 @@
 # Processes images at multiple resolutions and deploys them to GitHub Pages
 name: Process and Deploy Images
 on:
-  push:
-    branches: [ "main" ]
+    push:
+        branches: ['main']
 
 permissions:
-  contents: write
+    contents: write
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
 
-      - name: Install ImageMagick
-        run: sudo apt-get update && sudo apt-get install -y imagemagick
+            - name: Install ImageMagick
+              run: sudo apt-get update && sudo apt-get install -y imagemagick
 
-      - name: Resize images
-        run: |
-          mkdir -p dist/thumbnail dist/small dist/medium dist/hero dist/square
-          mogrify -path dist/thumbnail -resize 188x96 images/*
-          mogrify -path dist/small -resize 292x256 images/*
-          mogrify -path dist/medium -resize 395x192 images/*
-          mogrify -path dist/hero -resize 1720x677 -quality 95 images/*
-          mogrify -path dist/square -thumbnail 500x500^ -gravity center -extent 500x500 images/*
+            - name: Resize images
+              run: |
+                  # Create directories for JPG versions
+                  mkdir -p dist/thumbnail dist/small dist/medium dist/hero dist/square dist/large
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          publish_dir: dist
-          publish_branch: gh-pages
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+                  # Create directories for WebP versions
+                  mkdir -p dist/webp/thumbnail dist/webp/small dist/webp/medium dist/webp/hero dist/webp/square dist/webp/large
+
+                  # Process JPG versions (unchanged)
+                  mogrify -path dist/thumbnail -resize 188x96 images/*
+                  mogrify -path dist/small -resize 292x256 images/*
+                  mogrify -path dist/medium -resize 395x192 images/*
+                  mogrify -path dist/hero -resize 1920x1080 -quality 95 images/*
+                  mogrify -path dist/large -resize 2560x1440 -quality 90 images/*
+                  mogrify -path dist/square -thumbnail 500x500^ -gravity center -extent 500x500 images/*
+
+                  # Process WebP versions
+                  mogrify -path dist/webp/thumbnail -resize 188x96 -format webp -quality 85 images/*
+                  mogrify -path dist/webp/small -resize 292x256 -format webp -quality 85 images/*
+                  mogrify -path dist/webp/medium -resize 395x192 -format webp -quality 85 images/*
+                  mogrify -path dist/webp/hero -resize 1920x1080 -format webp -quality 85 images/*
+                  mogrify -path dist/webp/large -resize 2560x1440 -format webp -quality 85 images/*
+                  mogrify -path dist/webp/square -thumbnail 500x500^ -gravity center -extent 500x500 -format webp -quality 85 images/*
+
+            - name: Deploy to GitHub Pages
+              uses: peaceiris/actions-gh-pages@v3
+              with:
+                  publish_dir: dist
+                  publish_branch: gh-pages
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
