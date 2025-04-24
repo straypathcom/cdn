@@ -202,4 +202,15 @@ else
     echo "  Files unchanged: $((total_files - skipped_files - modified_files - error_files))"
     echo "  Files skipped (not recent): $skipped_files"
     echo "✅ Done!"
+
+	# Auto commit and push if files were modified
+    if [ "$modified_files" -gt 0 ]; then
+        echo "🚀 Committing and pushing changes..."
+        git add ./images/*
+        git commit -m "chore: Optimize images (modified: $modified_files)"
+        git push
+        echo "✅ Changes committed and pushed."
+    else
+        echo "ℹ️ No files were modified, skipping commit and push."
+    fi
 fi
